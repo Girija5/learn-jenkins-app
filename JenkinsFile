@@ -87,13 +87,34 @@ pipeline {
          }
             
         }
+        stage('Prod Tests')
+        {
+             agent
+                {
+                    docker
+                    {
+                        image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                        reuseNode true
+                    }
+                }
+                environment {
+                    CI_ENVIRONMENT_URL = "https://profound-dango-14ffe6.netlify.app"
+                }
+                steps
+                {
+                    sh '''
+                    echo 'End to End Testing phase in production'
+                    npx playwright test --reporter=html
+                    '''
+                }
+        }
     }
     post
     {
         always
         {
             junit 'jest-results/junit.xml'
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-test-report', reportFiles: 'index.html', reportName: 'HTML Report', reportTitles: '', useWrapperFileDirectly: true])
         }
     }
 }

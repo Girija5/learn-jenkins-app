@@ -66,6 +66,27 @@ pipeline {
                     '''
                 }
         }
+         stage('UAT Deploy') {
+                agent
+                {
+                    docker
+                    {
+                        image 'node:18-alpine'
+                        reuseNode true
+                    }
+                }
+         steps
+         {
+             sh '''
+                echo 'Deploying the application'
+                npm install netlify-cli@20.1.1
+                node_modules/.bin/netlify --version
+                echo 'Deploying to Netlify with siete id: $NETLIFY_SITE_ID'
+                node_modules/.bin/netlify deploy --dir=build 
+             '''
+         }
+            
+        }
         stage('Deploy') {
                 agent
                 {

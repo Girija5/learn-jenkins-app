@@ -81,17 +81,51 @@ pipeline {
                 echo 'Deploying the application'
                 npm install netlify-cli@20.1.1
                 node_modules/.bin/netlify --version
-                echo 'Deploying to Netlify with siete id: $NETLIFY_SITE_ID'
-                node_modules/.bin/netlify deploy --dir=build 
+                 node_modules/.bin/netlify deploy --dir=build --prod > deploy_output.json
+                echo 'Deployment URL:'
+                
+                
              '''
+             script
+         {
+            env.url = sh(script:"node_modules/.bin/node-jq -r '.deploy_url' deploy_output.json",returnStdOut:true)
          }
+         }
+         
             
+        }
+         stage('UAT Tests')
+        {
+             agent
+                {
+                    docker
+                    {
+                        image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                        reuseNode true
+                    }
+                }
+                environment {
+                    CI_ENVIRONMENT_URL = "${env.url}"
+                }
+                steps
+                {
+                    sh '''
+                    echo 'End to End Testing phase in production'
+                    npx playwright test --reporter=html
+                    '''
+                }
+                 {
+        always
+        {
+            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright UAT HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+        }
+    }
         }
         stage('Approval')
         {
             steps
             {
-                timeout(time: 2, unit: MINUTES) {
+                timeout(time: 2, unit: 'MINUTES') {
                     input message: 'Approve deployment to production?', ok: 'Deploy'
                 }
             }
@@ -110,10 +144,11 @@ pipeline {
          {
              sh '''
                 echo 'Deploying the application'
-                npm install netlify-cli@20.1.1
+                npm install netlify-cli@20.1.1 node-jq
                 node_modules/.bin/netlify --version
                 echo 'Deploying to Netlify with siete id: $NETLIFY_SITE_ID'
-                node_modules/.bin/netlify deploy --dir=build --prod
+                
+
              '''
          }
             

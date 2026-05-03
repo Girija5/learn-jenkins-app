@@ -98,7 +98,7 @@ pipeline {
             }
         }
 
-        stage('Staging E2E') {
+    /*    stage('Staging E2E') {
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
@@ -129,7 +129,7 @@ pipeline {
                     input message: 'Do you wish to deploy to production?', ok: 'Yes, I am sure!'
                 }
             }
-        }
+        }*/
 
         stage('Deploy prod') {
             agent {
